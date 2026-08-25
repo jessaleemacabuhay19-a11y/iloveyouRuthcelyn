@@ -1,0 +1,12 @@
+{
+  "name": "bilog-yokai-study-buddy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bilog: an interactive Yo-kai study buddy dashboard with a central AI backend.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}

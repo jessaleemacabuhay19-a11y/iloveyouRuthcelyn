@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bilog | Yo-kai Study Buddy</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E1A;
+    --panel:#151A2E;
+    --panel-2:#1C2340;
+    --line: rgba(148,163,184,0.14);
+    --text-main:#F1F5F9;
+    --text-muted:#8B93A8;
+    --cyan:#5EEAD4;
+    --cyan-dim:#0F3B36;
+    --yellow:#FFD166;
+    --yellow-dim:#4A3A0C;
+    --violet:#C084FC;
+    --violet-dim:#331A4D;
+    --coral:#FF6B6B;
+    --coral-dim:#4A1414;
+    --mood: var(--cyan);
+    --mood-dim: var(--cyan-dim);
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--text-main); font-family:'Inter',sans-serif;}
+  .font-display{font-family:'Baloo 2',sans-serif;}
+  .font-mono{font-family:'Space Mono',monospace;}
+  ::selection{background:var(--mood); color:#0B0E1A;}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-track{background:var(--panel);}
+  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:8px;}
+
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:20px;}
+  .chip{transition: background .35s ease, color .35s ease, box-shadow .35s ease;}
+  .mood-text{color:var(--mood); transition:color .35s ease;}
+  .mood-bg{background:var(--mood); transition:background .35s ease;}
+  .mood-border{border-color:var(--mood) !important; transition:border-color .35s ease;}
+
+  textarea:focus, input:focus, select:focus, button:focus-visible{outline:2px solid var(--mood); outline-offset:2px;}
+
+  /* ---------- Character stage ---------- */
+  .stage{ position:relative; width:220px; height:220px; margin:0 auto; }
+  .char-wrap{ width:100%; height:100%; transform-origin:50% 85%; }
+
+  @keyframes floatIdle{ 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-8px) rotate(-1deg);} }
+  @keyframes bounceHappy{ 0%,100%{transform:translateY(0) scale(1,1);} 30%{transform:translateY(-26px) scale(0.96,1.06);} 55%{transform:translateY(0) scale(1.08,0.92);} 75%{transform:translateY(-10px) scale(0.99,1.02);} }
+  @keyframes swaySmug{ 0%,100%{transform:rotate(-4deg) translateY(0);} 50%{transform:rotate(5deg) translateY(-4px);} }
+  @keyframes shakeAngry{ 0%,100%{transform:translateX(0) rotate(0deg);} 20%{transform:translateX(-7px) rotate(-3deg);} 40%{transform:translateX(6px) rotate(3deg);} 60%{transform:translateX(-5px) rotate(-2deg);} 80%{transform:translateX(5px) rotate(2deg);} }
+  @keyframes thinking{ 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-4px) rotate(2deg);} }
+
+  .char-wrap[data-emotion="neutral"]{ animation: floatIdle 3.2s ease-in-out infinite; }
+  .char-wrap[data-emotion="happy"]{ animation: bounceHappy 0.7s ease-in-out infinite; }
+  .char-wrap[data-emotion="smug"]{ animation: swaySmug 2.6s ease-in-out infinite; }
+  .char-wrap[data-emotion="angry"]{ animation: shakeAngry 0.4s ease-in-out infinite; }
+  .char-wrap[data-emotion="thinking"]{ animation: thinking 1.4s ease-in-out infinite; }
+
+  .emo-part{ display:none; }
+  .stage[data-emotion="neutral"] .emo-part[data-emo="neutral"]{ display:block; }
+  .stage[data-emotion="happy"] .emo-part[data-emo="happy"]{ display:block; }
+  .stage[data-emotion="smug"] .emo-part[data-emo="smug"]{ display:block; }
+  .stage[data-emotion="angry"] .emo-part[data-emo="angry"]{ display:block; }
+  .stage[data-emotion="thinking"] .emo-part[data-emo="thinking"]{ display:block; }
+
+  @keyframes blink{ 0%,92%,100%{ transform:scaleY(1); } 96%{ transform:scaleY(0.1); } }
+  .eye-blink{ transform-origin:center; animation: blink 4.5s ease-in-out infinite; }
+
+  @keyframes sparklePop{ 0%{ opacity:0; transform:scale(0.3) translateY(6px);} 40%{opacity:1; transform:scale(1.1) translateY(-4px);} 100%{opacity:0; transform:scale(0.5) translateY(-16px);} }
+  .sparkle{ animation: sparklePop 1s ease-in-out infinite; }
+  .sparkle:nth-child(2){ animation-delay:.25s; }
+  .sparkle:nth-child(3){ animation-delay:.5s; }
+
+  @keyframes steamRise{ 0%{ opacity:0.9; transform:translateY(0) scaleX(1);} 100%{ opacity:0; transform:translateY(-22px) scaleX(1.4);} }
+  .steam{ animation: steamRise 0.9s ease-out infinite; }
+  .steam:nth-child(2){ animation-delay:.3s; }
+
+  @keyframes shine{ 0%,100%{ opacity:0.35; } 50%{ opacity:1; } }
+  .shine-line{ animation: shine 1.8s ease-in-out infinite; }
+
+  @keyframes coreSpin{ 0%{ transform:rotate(0deg);} 100%{ transform:rotate(360deg);} }
+  .core-gem{ animation: coreSpin 6s linear infinite; transform-origin: center; }
+
+  /* ---------- Speech bubble ---------- */
+  .bubble{ position:relative; }
+  .bubble::after{ content:""; position:absolute; left:50%; bottom:-9px; transform:translateX(-50%); border-width:9px 9px 0 9px; border-style:solid; border-color:var(--panel-2) transparent transparent transparent; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{ position:fixed; inset:0; background:rgba(6,8,16,0.72); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+  .modal-overlay.active{ opacity:1; pointer-events:auto; }
+  .modal-card{ transform:scale(0.85) translateY(20px); transition:transform .3s cubic-bezier(.34,1.56,.64,1); }
+  .modal-overlay.active .modal-card{ transform:scale(1) translateY(0); }
+
+  @keyframes wiggleIn{ 0%{transform:scale(0.9) rotate(-2deg);} 50%{transform:scale(1.03) rotate(1deg);} 100%{transform:scale(1) rotate(0deg);} }
+  .quiz-btn.correct{ background:var(--yellow-dim) !important; border-color:var(--yellow) !important; animation:wiggleIn .4s ease; }
+  .quiz-btn.wrong{ background:var(--coral-dim) !important; border-color:var(--coral) !important; animation:wiggleIn .4s ease; }
+  .quiz-btn.faded{ opacity:0.4; }
+
+  .dot-typing{ display:inline-flex; gap:3px; }
+  .dot-typing span{ width:5px; height:5px; border-radius:50%; background:var(--mood); animation:dotFade 1.1s infinite; }
+  .dot-typing span:nth-child(2){ animation-delay:.15s; }
+  .dot-typing span:nth-child(3){ animation-delay:.3s; }
+  @keyframes dotFade{ 0%,60%,100%{opacity:.25;} 30%{opacity:1;} }
+
+  .scrollbox{ scrollbar-width:thin; }
+  .content-fade{ animation: fadeUp .35s ease; }
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
+
+  @media (prefers-reduced-motion: reduce){
+    .char-wrap, .sparkle, .steam, .shine-line, .core-gem, .eye-blink, .dot-typing span{ animation:none !important; }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+  <!-- Header -->
+  <header class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full mood-bg flex items-center justify-center font-display font-bold text-[#0B0E1A] text-lg">B</div>
+      <div>
+        <h1 class="font-display text-xl font-bold leading-none">Bilog</h1>
+        <p class="text-xs font-mono text-[color:var(--text-muted)]">yo-kai study buddy</p>
+      </div>
+    </div>
+    <div id="mood-chip" class="chip font-mono text-xs px-3 py-1.5 rounded-full border" style="background:var(--mood-dim); border-color:var(--mood); color:var(--mood);">
+      MOOD: <span id="mood-label">CHILL</span>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
+
+    <!-- LEFT: Character + Chat -->
+    <div class="lg:sticky lg:top-6 lg:self-start flex flex-col gap-4">
+
+      <div class="panel p-6 flex flex-col items-center">
+        <div class="stage" id="stage" data-emotion="neutral">
+          <div class="char-wrap" id="char-wrap" data-emotion="neutral">
+            <svg viewBox="0 0 220 220" width="220" height="220">
+              <ellipse cx="110" cy="200" rx="58" ry="9" fill="#000" opacity="0.25"/>
+              <path d="M 110 40 C 55 40 32 85 32 130 C 32 175 65 198 110 198 C 155 198 188 175 188 130 C 188 85 165 40 110 40 Z" fill="#3AA9E0"/>
+              <path d="M 110 40 C 55 40 32 85 32 130 C 32 155 42 172 58 183 C 50 150 60 90 110 78 C 160 90 170 150 162 183 C 178 172 188 155 188 130 C 188 85 165 40 110 40 Z" fill="#5EC4F0" opacity="0.55"/>
+              <path d="M 30 118 C 8 112 6 90 20 82 C 28 78 36 82 38 92 Z" fill="#3AA9E0"/>
+              <path d="M 190 118 C 212 112 214 90 200 82 C 192 78 184 82 182 92 Z" fill="#3AA9E0"/>
+              <ellipse cx="70" cy="150" rx="28" ry="20" fill="#EAF6FF"/>
+              <ellipse cx="150" cy="150" rx="28" ry="20" fill="#EAF6FF"/>
+              <g class="core-gem" style="transform-box: fill-box;">
+                <path d="M 110 50 L 116 62 L 110 74 L 104 62 Z" fill="#FFE7A3"/>
+                <circle cx="110" cy="62" r="4" fill="#FFD166"/>
+              </g>
+              <g class="emo-part" data-emo="neutral">
+                <g class="eye-blink" style="transform-box: fill-box;"><ellipse cx="88" cy="118" rx="10" ry="12" fill="#152238"/><circle cx="91" cy="113" r="3" fill="#fff"/></g>
+                <g class="eye-blink" style="transform-box: fill-box; animation-delay:.15s;"><ellipse cx="132" cy="118" rx="10" ry="12" fill="#152238"/><circle cx="135" cy="113" r="3" fill="#fff"/></g>
+                <path d="M 96 148 Q 110 156 124 148" stroke="#152238" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <ellipse cx="70" cy="140" rx="9" ry="5" fill="#FF9BB3" opacity="0.55"/>
+                <ellipse cx="150" cy="140" rx="9" ry="5" fill="#FF9BB3" opacity="0.55"/>
+              </g>
+              <g class="emo-part" data-emo="thinking">
+                <ellipse cx="88" cy="120" rx="9" ry="9" fill="#152238"/>
+                <ellipse cx="132" cy="118" rx="9" ry="4" fill="#152238"/>
+                <path d="M 100 152 Q 110 148 122 150" stroke="#152238" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <circle cx="168" cy="70" r="5" fill="#EAF6FF" opacity="0.9"/>
+                <circle cx="180" cy="55" r="8" fill="#EAF6FF" opacity="0.9"/>
+                <text x="180" y="60" font-size="10" font-weight="700" fill="#3AA9E0" text-anchor="middle" font-family="Baloo 2">?</text>
+              </g>
+              <g class="emo-part" data-emo="happy">
+                <path d="M 78 114 Q 88 100 98 114" stroke="#152238" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 122 114 Q 132 100 142 114" stroke="#152238" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 90 144 Q 110 168 130 144 Q 110 158 90 144 Z" fill="#152238"/>
+                <ellipse cx="70" cy="138" rx="11" ry="7" fill="#FF6F9C" opacity="0.75"/>
+                <ellipse cx="150" cy="138" rx="11" ry="7" fill="#FF6F9C" opacity="0.75"/>
+                <g class="sparkle" style="transform-box: fill-box;"><path d="M 40 60 L 43 68 L 51 71 L 43 74 L 40 82 L 37 74 L 29 71 L 37 68 Z" fill="#FFD166"/></g>
+                <g class="sparkle" style="transform-box: fill-box;"><path d="M 185 90 L 187 96 L 193 98 L 187 100 L 185 106 L 183 100 L 177 98 L 183 96 Z" fill="#FFD166"/></g>
+                <g class="sparkle" style="transform-box: fill-box;"><path d="M 165 40 L 167 46 L 173 48 L 167 50 L 165 56 L 163 50 L 157 48 L 163 46 Z" fill="#FFD166"/></g>
+              </g>
+              <g class="emo-part" data-emo="smug">
+                <path d="M 78 122 Q 88 112 98 118" stroke="#152238" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 122 112 L 142 118" stroke="#152238" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 96 150 Q 116 156 128 144" stroke="#152238" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <ellipse cx="70" cy="140" rx="9" ry="5" fill="#FF9BB3" opacity="0.5"/>
+                <g class="shine-line"><path d="M 155 75 L 175 68" stroke="#EAF6FF" stroke-width="3" stroke-linecap="round"/></g>
+                <g class="shine-line" style="animation-delay:.4s;"><path d="M 162 85 L 178 82" stroke="#EAF6FF" stroke-width="3" stroke-linecap="round"/></g>
+              </g>
+              <g class="emo-part" data-emo="angry">
+                <path d="M 80 108 L 98 118" stroke="#152238" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 140 108 L 122 118" stroke="#152238" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <circle cx="88" cy="122" r="7" fill="#152238"/>
+                <circle cx="132" cy="122" r="7" fill="#152238"/>
+                <path d="M 92 150 L 100 144 L 108 150 L 116 144 L 124 150 L 128 148" stroke="#152238" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <ellipse cx="66" cy="132" rx="10" ry="6" fill="#FF6B6B" opacity="0.7"/>
+                <ellipse cx="154" cy="132" rx="10" ry="6" fill="#FF6B6B" opacity="0.7"/>
+                <g class="steam"><path d="M 55 55 Q 50 42 58 30" stroke="#EAF6FF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.85"/></g>
+                <g class="steam"><path d="M 165 55 Q 170 42 162 30" stroke="#EAF6FF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.85"/></g>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="bubble mt-5 px-4 py-3 rounded-2xl text-sm font-medium text-center max-w-[280px]" style="background:var(--panel-2);" id="speech-bubble">
+          Uy! Kumusta? Paste mo lang notes mo sa baba para makapag-aral tayo. 😤 (ay, hindi ako umiiyak, may usok lang sa mata ko)
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div class="panel p-4 flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-display font-bold text-sm">Chat kay Bilog</h2>
+          <span class="font-mono text-[10px] text-[color:var(--text-muted)]" id="chat-status">tahimik</span>
+        </div>
+        <div id="chat-log" class="scrollbox flex flex-col gap-2 max-h-64 overflow-y-auto pr-1"></div>
+        <div class="flex gap-2">
+          <input id="chat-input" type="text" placeholder="Tanong mo sa aralin..." disabled
+            class="flex-1 bg-[#0F1424] border border-[color:var(--line)] rounded-xl px-3 py-2 text-sm placeholder:text-[color:var(--text-muted)] disabled:opacity-40" />
+          <button id="chat-send" disabled
+            class="mood-bg text-[#0B0E1A] font-display font-bold text-sm px-4 py-2 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95">
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Content + Quiz -->
+    <div class="flex flex-col gap-6">
+
+      <!-- Paste area -->
+      <div class="panel p-5">
+        <h2 class="font-display font-bold text-base mb-1">1. I-paste mo notes mo</h2>
+        <p class="text-xs text-[color:var(--text-muted)] mb-3">Kopya-paste mula sa PDF/Docs/PPTX mo. Basahin ni Bilog, hahatiin niya sa 3 sub-topics tapos gagawan ka niya ng quiz.</p>
+        <textarea id="raw-input" rows="6" placeholder="I-paste dito ang laman ng iyong file..."
+          class="w-full bg-[#0F1424] border border-[color:var(--line)] rounded-xl px-3 py-2.5 text-sm placeholder:text-[color:var(--text-muted)] resize-none"></textarea>
+        <div class="flex flex-wrap items-center gap-2 mt-3">
+          <button id="parse-btn" class="mood-bg text-[#0B0E1A] font-display font-bold text-sm px-4 py-2 rounded-xl active:scale-95 transition">
+            Basahin ni Bilog
+          </button>
+          <button id="demo-btn" class="border border-[color:var(--line)] text-sm px-4 py-2 rounded-xl active:scale-95 transition hover:bg-[color:var(--panel-2)]">
+            Subukan gamit ang halimbawa
+          </button>
+          <span id="parse-status" class="text-xs font-mono text-[color:var(--text-muted)]"></span>
+        </div>
+      </div>
+
+      <!-- Subtopics -->
+      <div class="panel p-5 hidden" id="study-section">
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h2 class="font-display font-bold text-base">2. Pag-aralan natin</h2>
+          <select id="subtopic-select" class="bg-[#0F1424] border border-[color:var(--line)] rounded-xl px-3 py-1.5 text-sm font-mono"></select>
+        </div>
+        <div id="subtopic-content" class="content-fade text-sm leading-relaxed text-[color:var(--text-main)]"></div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="panel p-5 hidden" id="quiz-section">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-display font-bold text-base">3. Pop-quiz time</h2>
+          <span class="font-mono text-xs px-2.5 py-1 rounded-full border" style="border-color:var(--line); color:var(--text-muted);">
+            score: <span id="quiz-score">0</span>/3
+          </span>
+        </div>
+        <div id="quiz-list" class="flex flex-col gap-4"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Quiz feedback modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-card panel p-6 max-w-sm mx-4 text-center" id="modal-card">
+    <div id="modal-icon" class="text-4xl mb-2">✦</div>
+    <h3 id="modal-title" class="font-display font-bold text-lg mb-2">Tama!</h3>
+    <p id="modal-text" class="text-sm text-[color:var(--text-muted)] mb-4"></p>
+    <button id="modal-close" class="mood-bg text-[#0B0E1A] font-display font-bold text-sm px-5 py-2 rounded-xl active:scale-95 transition">
+      Sige, tuloy
+    </button>
+  </div>
+</div>
+
+<script>
+// All AI calls go through the app's own backend at /api/ai — this file
+// never talks to Anthropic directly and never holds a secret key.
+const AI_ENDPOINT = "/api/ai";
+
+const MOODS = {
+  neutral: { color:'#5EEAD4', dim:'#0F3B36', label:'CHILL' },
+  happy:   { color:'#FFD166', dim:'#4A3A0C', label:'SAYA' },
+  smug:    { color:'#C084FC', dim:'#331A4D', label:'ARTE' },
+  angry:   { color:'#FF6B6B', dim:'#4A1414', label:'ASAR' },
+  thinking:{ color:'#5EEAD4', dim:'#0F3B36', label:'ISIP' },
+};
+
+const stage = document.getElementById('stage');
+const charWrap = document.getElementById('char-wrap');
+const moodChip = document.getElementById('mood-chip');
+const moodLabel = document.getElementById('mood-label');
+const speechBubble = document.getElementById('speech-bubble');
+const root = document.documentElement;
+
+function setEmotion(emotion, line){
+  const m = MOODS[emotion] || MOODS.neutral;
+  stage.setAttribute('data-emotion', emotion);
+  charWrap.setAttribute('data-emotion', emotion);
+  moodLabel.textContent = m.label;
+  root.style.setProperty('--mood', m.color);
+  root.style.setProperty('--mood-dim', m.dim);
+  if (line) speechBubble.textContent = line;
+}
+
+const IDLE_LINES = [
+  "Uy! Kumusta? Paste mo lang notes mo sa baba para makapag-aral tayo.",
+  "Ako si Bilog. Hindi ako si Doraemon, pero mas witty ako, promise.",
+  "Tara, i-scan natin yung notes mo. Ayoko nang tumatamad ka.",
+];
+speechBubble.textContent = IDLE_LINES[Math.floor(Math.random()*IDLE_LINES.length)];
+
+stage.addEventListener('click', () => {
+  if (currentEmotion() === 'neutral') {
+    setEmotion('smug', "Bakit mo ako ginagalaw? Busy ako, aral tayo dapat.");
+    setTimeout(() => { if (currentEmotion()==='smug') setEmotion('neutral'); }, 1800);
+  }
+});
+function currentEmotion(){ return stage.getAttribute('data-emotion'); }
+
+// Calls the central backend AI service. Returns parsed data on success.
+// Throws a NO_FAKE_AI-safe error on failure — callers must show a friendly
+// message and must NEVER substitute fabricated content when this rejects.
+async function callAI(operation, payload){
+  let res;
+  try{
+    res = await fetch(AI_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ operation, payload })
+    });
+  }catch(networkErr){
+    throw new Error("NETWORK: Hindi ma-reach ang backend. Tumatakbo ba ang server?");
+  }
+
+  let json;
+  try{ json = await res.json(); }
+  catch{ throw new Error("Backend returned an invalid response."); }
+
+  if (!json.ok){
+    if (json.error === "NO_API_KEY"){
+      throw new Error("NO_API_KEY: " + (json.friendly || "Bilog needs an AI connection configured on the server."));
+    }
+    throw new Error(json.error || "Unknown AI error");
+  }
+  return json.data;
+}
+
+let studyPack = null;
+
+const parseBtn = document.getElementById('parse-btn');
+const demoBtn = document.getElementById('demo-btn');
+const rawInput = document.getElementById('raw-input');
+const parseStatus = document.getElementById('parse-status');
+const studySection = document.getElementById('study-section');
+const quizSection = document.getElementById('quiz-section');
+const subtopicSelect = document.getElementById('subtopic-select');
+const subtopicContent = document.getElementById('subtopic-content');
+const chatInput = document.getElementById('chat-input');
+const chatSend = document.getElementById('chat-send');
+const chatLog = document.getElementById('chat-log');
+const chatStatus = document.getElementById('chat-status');
+
+const DEMO_TEXT = `Ang photosynthesis ay ang proseso kung saan ginagawa ng mga halaman ang sarili nilang pagkain gamit ang liwanag ng araw, tubig, at carbon dioxide. Nangyayari ito sa mga chloroplast, partikular sa berdeng substance na tinatawag na chlorophyll na siyang sumisipsip ng liwanag. May dalawang yugto ang photosynthesis: ang light-dependent reactions na nagaganap sa thylakoid membrane at gumagawa ng ATP at NADPH, at ang Calvin cycle (light-independent reactions) na nagaganap sa stroma at gumagamit ng carbon dioxide para gumawa ng glucose. Ang kabuuang equation ay: 6CO2 + 6H2O + liwanag -> C6H12O6 + 6O2. Mahalaga ang photosynthesis dahil ito ang pinagmumulan ng oxygen na hinihinga natin at ito rin ang simula ng food chain sa mundo.`;
+
+demoBtn.addEventListener('click', () => {
+  rawInput.value = DEMO_TEXT;
+  parseContent();
+});
+
+parseBtn.addEventListener('click', parseContent);
+
+async function parseContent(){
+  const raw = rawInput.value.trim();
+  if (!raw){
+    parseStatus.textContent = "wala ka pang na-paste, char!";
+    parseStatus.style.color = 'var(--coral)';
+    setEmotion('angry', "Ano ba, wala ka pang pinaste! Paano ako magtuturo dyan?");
+    setTimeout(()=>{ if(currentEmotion()==='angry') setEmotion('neutral'); }, 2200);
+    return;
+  }
+  parseBtn.disabled = true;
+  demoBtn.disabled = true;
+  parseStatus.style.color = 'var(--text-muted)';
+  parseStatus.textContent = "binabasa ni Bilog...";
+  setEmotion('thinking', "Sandali lang... binabasa ko pa 'to, ha.");
+
+  try{
+    const parsed = await callAI("analyzeLesson", { rawText: raw });
+    studyPack = parsed;
+    renderStudyPack();
+    parseStatus.textContent = "tapos na!";
+    parseStatus.style.color = 'var(--yellow)';
+    setEmotion('happy', "Ayan! Kumpleto na. Piliin mo yung gusto mong pag-aralan sa dropdown.");
+    chatInput.disabled = false;
+    chatSend.disabled = false;
+    chatStatus.textContent = "bukas na tayo";
+    setTimeout(()=>{ if(currentEmotion()==='happy') setEmotion('neutral'); }, 2400);
+  }catch(err){
+    console.error(err);
+    if (String(err.message).startsWith("NO_API_KEY")){
+      parseStatus.textContent = "walang AI connection";
+      parseStatus.style.color = 'var(--coral)';
+      setEmotion('angry', "Bilog needs an AI connection to analyze your lesson. Please configure the AI provider first.");
+    } else {
+      parseStatus.textContent = "may problema, subukan ulit";
+      parseStatus.style.color = 'var(--coral)';
+      setEmotion('angry', "Ay sayang, nagulo ako dyan. I-try mo ulit i-click, please na lang.");
+    }
+  }finally{
+    parseBtn.disabled = false;
+    demoBtn.disabled = false;
+  }
+}
+
+function renderStudyPack(){
+  studySection.classList.remove('hidden');
+  quizSection.classList.remove('hidden');
+
+  subtopicSelect.innerHTML = '';
+  studyPack.subtopics.forEach((s, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = (i+1) + '. ' + s.title;
+    subtopicSelect.appendChild(opt);
+  });
+  showSubtopic(0);
+
+  const quizList = document.getElementById('quiz-list');
+  quizList.innerHTML = '';
+  quizScoreEl.textContent = '0';
+  score = 0;
+  studyPack.quiz.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'panel p-4';
+    card.style.background = 'var(--panel-2)';
+    const optsHtml = q.options.map((opt, oi) =>
+      `<button class="quiz-btn text-left text-sm px-3 py-2 rounded-lg border w-full transition active:scale-[0.98]" style="border-color:var(--line); background:#0F1424;" data-q="${qi}" data-o="${oi}">${escapeHtml(opt)}</button>`
+    ).join('');
+    card.innerHTML = `
+      <p class="font-medium text-sm mb-3 font-mono"><span style="color:var(--mood);">Q${qi+1}.</span> ${escapeHtml(q.question)}</p>
+      <div class="flex flex-col gap-2" id="quiz-opts-${qi}">${optsHtml}</div>
+    `;
+    quizList.appendChild(card);
+  });
+
+  document.querySelectorAll('.quiz-btn').forEach(btn => {
+    btn.addEventListener('click', onQuizAnswer);
+  });
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+subtopicSelect.addEventListener('change', (e) => showSubtopic(parseInt(e.target.value)));
+
+function showSubtopic(i){
+  const s = studyPack.subtopics[i];
+  subtopicContent.classList.remove('content-fade');
+  void subtopicContent.offsetWidth;
+  subtopicContent.classList.add('content-fade');
+  subtopicContent.innerHTML = `<h3 class="font-display font-bold text-base mb-2" style="color:var(--mood);">${escapeHtml(s.title)}</h3><p>${escapeHtml(s.content)}</p>`;
+}
+
+let score = 0;
+const quizScoreEl = document.getElementById('quiz-score');
+const answered = new Set();
+
+const CORRECT_LINES = [
+  "Tama! Alam ko namang matalino ka, ang bagal mo lang minsan umamin.",
+  "Oo nga naman! Diba sinabi ko na magaling ka.",
+  "Wow, tama! Baka kailangan mo nang mag-upgrade... sa confidence mo, hindi sakin.",
+  "Tama yan! Kahit anong sabihin ng iba, alam kong pasado ka.",
+];
+const WRONG_LINES = [
+  "Ay grabe, mali. Pero okay lang, second try naman meron.",
+  "Hala, mali. Baka kanina ka pa nagba-browse ng ibang tab, sabihin mo lang.",
+  "Mali yan! Pero ayos lang, andito naman ako para ipaliwanag ulit.",
+  "Ha? Mali? Sige, balikan natin yung notes, hindi kita iiwan.",
+];
+
+function onQuizAnswer(e){
+  const btn = e.currentTarget;
+  const qi = parseInt(btn.dataset.q);
+  const oi = parseInt(btn.dataset.o);
+  if (answered.has(qi)) return;
+  answered.add(qi);
+
+  const q = studyPack.quiz[qi];
+  const isCorrect = oi === q.correctIndex;
+  const group = document.getElementById('quiz-opts-' + qi).querySelectorAll('.quiz-btn');
+  group.forEach(b => {
+    const bo = parseInt(b.dataset.o);
+    if (bo === q.correctIndex) b.classList.add('correct');
+    else if (bo === oi) b.classList.add('wrong');
+    else b.classList.add('faded');
+    b.disabled = true;
+  });
+
+  if (isCorrect){
+    score++;
+    quizScoreEl.textContent = score;
+    setEmotion('happy', "Ayos, tama sagot mo!");
+    openModal(true, "Tama!", pick(CORRECT_LINES) + "\n\n" + q.explanation);
+  } else {
+    setEmotion('angry', "Aray, mali. I-try mo ulit yung ibang tanong.");
+    openModal(false, "Mali...", pick(WRONG_LINES) + "\n\n" + q.explanation);
+  }
+}
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+const modalOverlay = document.getElementById('modal-overlay');
+const modalTitle = document.getElementById('modal-title');
+const modalText = document.getElementById('modal-text');
+const modalIcon = document.getElementById('modal-icon');
+const modalClose = document.getElementById('modal-close');
+
+function openModal(correct, title, text){
+  modalTitle.textContent = title;
+  modalText.textContent = text;
+  modalIcon.textContent = correct ? '✦' : '✕';
+  modalIcon.style.color = correct ? 'var(--yellow)' : 'var(--coral)';
+  modalOverlay.classList.add('active');
+}
+modalClose.addEventListener('click', () => {
+  modalOverlay.classList.remove('active');
+  setTimeout(() => { if(currentEmotion()==='happy' || currentEmotion()==='angry') setEmotion('neutral'); }, 400);
+});
+modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalClose.click(); });
+
+chatSend.addEventListener('click', sendChat);
+chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+
+function addChatBubble(text, who){
+  const wrap = document.createElement('div');
+  wrap.className = who === 'user' ? 'self-end max-w-[85%]' : 'self-start max-w-[85%]';
+  wrap.style.cssText = who === 'user'
+    ? 'align-self:flex-end; background:#0F1424; border:1px solid var(--line); padding:8px 12px; border-radius:12px; font-size:13px;'
+    : 'align-self:flex-start; background:var(--panel-2); padding:8px 12px; border-radius:12px; font-size:13px;';
+  wrap.textContent = text;
+  chatLog.appendChild(wrap);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  return wrap;
+}
+
+async function sendChat(){
+  const msg = chatInput.value.trim();
+  if (!msg || !studyPack) return;
+  chatInput.value = '';
+  chatInput.disabled = true;
+  chatSend.disabled = true;
+  addChatBubble(msg, 'user');
+  const typingBubble = addChatBubble('', 'bilog');
+  typingBubble.innerHTML = '<span class="dot-typing"><span></span><span></span><span></span></span>';
+  chatStatus.textContent = "nagta-type...";
+
+  const contentSummary = studyPack.subtopics.map(s => s.title + ': ' + s.content).join(' | ');
+
+  try{
+    const parsed = await callAI("chat", { message: msg, contentSummary });
+    typingBubble.remove();
+    addChatBubble(parsed.reply, 'bilog');
+    setEmotion(parsed.emotion || 'smug', parsed.reply);
+    chatStatus.textContent = "tahimik";
+  }catch(err){
+    console.error(err);
+    typingBubble.remove();
+    if (String(err.message).startsWith("NO_API_KEY")){
+      addChatBubble("Oops 😭 Hindi ko makausap yung AI ngayon. Check natin yung AI connection.", 'bilog');
+    } else {
+      addChatBubble("Ay, na-glitch ako sandali. I-try mo ulit itanong.", 'bilog');
+    }
+    setEmotion('angry');
+    chatStatus.textContent = "may glitch";
+  }finally{
+    chatInput.disabled = false;
+    chatSend.disabled = false;
+    chatInput.focus();
+  }
+}
+</script>
+</body>
+</html>
